@@ -1,0 +1,12 @@
+parameters:
+  - name: variables
+    type: object
+    default: []
+
+steps:
+  - ${{ each item in parameters.variables }}:
+    - task: Bash@3
+      inputs:
+        targetType: 'inline'
+        script: |
+          echo "${{ item }}"

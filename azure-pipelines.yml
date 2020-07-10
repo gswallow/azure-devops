@@ -1,0 +1,30 @@
+variables:
+  - name: agent_pool
+    value: "Azure Pipelines"
+  - name: image_label
+    value: "ubuntu-latest"
+  - group: terraform
+
+jobs:
+  - job: set_variables
+    pool:
+      name: $(agent_pool)
+      vmImage: $(image_label)
+    steps:
+      - task: Bash@3
+        inputs:
+          targetType: 'inline'
+          script: |
+            echo "##vso[task.setvariable variable=first]eh?"
+            echo "##vso[task.setvariable variable=second]second"
+      - template: templates/use-variables.yml
+        parameters:
+          variables:
+            - $(first)
+            - ${{ variables.second }}
+            - ${{ format('{0}', variables.first) }}
+      - task: Bash@3
+        inputs:
+          targetType: 'inline'
+          script: |
+            curl -u Basic:$(azp.pat) --location --request GET "${SYSTEM_TEAMFOUNDATIONCOLLECTIONURI}${SYSTEM_TEAMPROJECT}/_apis/serviceendpoint/endpoints?api-version=5.1-preview.2"
