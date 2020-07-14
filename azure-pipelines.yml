@@ -23,8 +23,17 @@ jobs:
             - $(first)
             - ${{ variables.second }}
             - ${{ format('{0}', variables.first) }}
+  - job: explore
+    pool:
+      name: k8s-ci
+    steps:
       - task: Bash@3
         inputs:
           targetType: 'inline'
           script: |
-            curl -u Basic:$(azp.pat) --location --request GET "${SYSTEM_TEAMFOUNDATIONCOLLECTIONURI}${SYSTEM_TEAMPROJECT}/_apis/serviceendpoint/endpoints?api-version=5.1-preview.2"
+            which helm
+            which kubectl
+            pwd
+            whoami
+            curl -sSL https://istio.io/downloadIstio | ISTIO_VERSION=1.6.5 sh -
+            ls
