@@ -28,6 +28,9 @@ jobs:
       name: $(agent_pool)
       vmImage: $(image_label)
     steps:
+      - task: KubectlInstaller@0
+        inputs:
+          kubectlVersion: 'latest'
       - task: Bash@3
         inputs:
           targetType: 'inline'
@@ -41,6 +44,9 @@ jobs:
     pool:
       name: k8s-ci
     steps:
+      - task: KubectlInstaller@0
+        inputs:
+          kubectlVersion: 'latest'
       - task: Bash@3
         inputs:
           targetType: 'inline'
