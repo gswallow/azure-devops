@@ -36,6 +36,7 @@ jobs:
             which java
             echo $PATH
             echo $(Agent.ToolsDirectory)
+            ls -R $(Agent.ToolsDirectory)
   - job: explore_self_hosted
     pool:
       name: k8s-ci
@@ -48,3 +49,4 @@ jobs:
             which java
             echo $PATH
             echo $(Agent.ToolsDirectory)
+            ls -R $(Agent.ToolsDirectory)
