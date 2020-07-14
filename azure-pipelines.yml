@@ -23,7 +23,18 @@ jobs:
             - $(first)
             - ${{ variables.second }}
             - ${{ format('{0}', variables.first) }}
-  - job: explore
+  - job: explore_hosted_agents
+    pool:
+      name: $(agent_pool)
+      vmImage: $(image_label)
+    steps:
+      - task: Bash@3
+        inputs:
+          targetType: 'inline'
+          script: |
+            whoami
+            which java
+  - job: explore_self_hosted
     pool:
       name: k8s-ci
     steps:
@@ -31,9 +42,5 @@ jobs:
         inputs:
           targetType: 'inline'
           script: |
-            which helm
-            which kubectl
-            pwd
             whoami
-            curl -sSL https://istio.io/downloadIstio | ISTIO_VERSION=1.6.5 sh -
-            ls
+            which java
