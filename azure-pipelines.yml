@@ -34,7 +34,6 @@ jobs:
           script: |
             whoami
             which java
-            echo $PATH
   - job: explore_self_hosted
     pool:
       name: k8s-ci
@@ -45,4 +44,3 @@ jobs:
           script: |
             whoami
             which java
-            echo $PATH
