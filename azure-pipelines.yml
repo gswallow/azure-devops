@@ -35,7 +35,14 @@ jobs:
           regionName: 'us-east-2'
           readMode: 'single'
           parameterName: 'hey'
-      - script: echo $(A.hey); echo $(hey) ; echo ${{ variables.hey }} ; echo ${{ variables['A.hey'] }}
+      - task: Bash@3
+        inputs:
+          targetType:inline
+          script: |
+            echo first $(A.hey) 
+            echo second $(hey)
+            echo third ${{ variables.hey }}
+            echo fourth ${{ variables['A.hey'] }}
   - job: explore_hosted_agents
     pool:
       name: $(agent_pool)
