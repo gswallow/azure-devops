@@ -15,6 +15,11 @@ jobs:
         inputs:
           targetType: 'inline'
           script: |
+            echo hey
+      - task: Bash@3
+        inputs:
+          targetType: 'inline'
+          script: |
             echo "##vso[task.setvariable variable=first]eh?"
             echo "##vso[task.setvariable variable=second]second"
       - template: templates/use-variables.yml
@@ -23,6 +28,14 @@ jobs:
             - $(first)
             - ${{ variables.second }}
             - ${{ format('{0}', variables.first) }}
+      - task: SystemsManagerGetParameter@1
+        name: "A"
+        inputs:
+          awsCredentials: 'ci'
+          regionName: 'us-east-2'
+          readMode: 'single'
+          parameterName: 'hey'
+      - script: echo $(A.hey)
   - job: explore_hosted_agents
     pool:
       name: $(agent_pool)
