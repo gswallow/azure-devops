@@ -49,7 +49,7 @@ stages:
   jobs:
   - job: receive_variable
     variables:
-      carry_me: $[stageDependencies.first.set_variables.outputs['send_variable.carry_me']
+      carry_me: $[stageDependencies.first.set_variables.outputs['send_variable.carry_me']]
     pool:
       name: k8s-ci
     steps:
