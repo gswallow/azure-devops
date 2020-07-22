@@ -50,7 +50,9 @@ stages:
   jobs:
   - job: receive_variable
     variables:
-      carried: $[stageDependencies.first.set_variables.outputs['send_variable.carry_me']]
+      test_one: $[stageDependencies.first.set_variables.outputs['send_variable.carry_me']]
+      test_two: $[dependencies.first.set_variables.outputs['send_variable.carry_me']]
+      test_three: $[stageDependencies.first.outputs['set_variables.send_variable.carry_me']]
     pool:
       name: k8s-ci
     steps:
@@ -58,4 +60,6 @@ stages:
         inputs:
           targetType: inline
           script: |
-            echo Carried variable is $(carried)
+            echo test_one is $(test_one) #fail
+            echo test_two is $(test_two)
+            echo test_three is $(test_three)
