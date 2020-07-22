@@ -5,74 +5,86 @@ variables:
     value: "ubuntu-latest"
   - group: terraform
 
-jobs:
-  - job: set_variables
+stages:
+- stage: first
+  jobs:
+    - job: set_variables
+      pool:
+        name: $(agent_pool)
+        vmImage: $(image_label)
+      steps:
+        - task: Bash@3
+          inputs:
+            targetType: 'inline'
+            script: |
+              echo hey
+        - task: Bash@3
+          inputs:
+            targetType: 'inline'
+            script: |
+              echo "##vso[task.setvariable variable=first]eh?"
+              echo "##vso[task.setvariable variable=second]second"
+        - template: templates/use-variables.yml
+          parameters:
+            variables:
+              - $(first)
+              - ${{ variables.second }}
+              - ${{ format('{0}', variables.first) }}
+        - task: SystemsManagerGetParameter@1
+          name: "A"
+          inputs:
+            awsCredentials: 'ci'
+            regionName: 'us-east-2'
+            readMode: 'single'
+            parameterName: 'hey'
+        - task: Bash@3
+          inputs:
+            targetType: inline
+            script: |
+              echo ##vso[task.setvariable variable=carry_me;isOutput=true]$(hey)
+              echo in first stage, hey=$(hey)
+    - job: explore_hosted_agents
+      pool:
+        name: $(agent_pool)
+        vmImage: $(image_label)
+      steps:
+        - task: KubectlInstaller@0
+          inputs:
+            kubectlVersion: 'latest'
+        - task: Bash@3
+          inputs:
+            targetType: 'inline'
+            script: |
+              whoami
+              which java
+              echo $PATH
+              echo $(Agent.ToolsDirectory)
+              ls -R $(Agent.ToolsDirectory)
+    - job: explore_self_hosted
+      pool:
+        name: k8s-ci
+      steps:
+        - task: KubectlInstaller@0
+          inputs:
+            kubectlVersion: 'latest'
+        - task: Bash@3
+          inputs:
+            targetType: 'inline'
+            script: |
+              whoami
+              which java
+              echo $PATH
+              echo $(Agent.ToolsDirectory)
+              ls -R $(Agent.ToolsDirectory)
+
+- stage: second
+  jobs:
+  - job: carry_variable
     pool:
-      name: $(agent_pool)
-      vmImage: $(image_label)
+      name: k8s-ci
     steps:
-      - task: Bash@3
-        inputs:
-          targetType: 'inline'
-          script: |
-            echo hey
-      - task: Bash@3
-        inputs:
-          targetType: 'inline'
-          script: |
-            echo "##vso[task.setvariable variable=first]eh?"
-            echo "##vso[task.setvariable variable=second]second"
-      - template: templates/use-variables.yml
-        parameters:
-          variables:
-            - $(first)
-            - ${{ variables.second }}
-            - ${{ format('{0}', variables.first) }}
-      - task: SystemsManagerGetParameter@1
-        name: "A"
-        inputs:
-          awsCredentials: 'ci'
-          regionName: 'us-east-2'
-          readMode: 'single'
-          parameterName: 'hey'
       - task: Bash@3
         inputs:
           targetType: inline
           script: |
-            echo first $(A.hey) 
-            echo second $(hey)
-            echo third ${{ variables.hey }}
-            echo fourth ${{ variables['A.hey'] }}
-  - job: explore_hosted_agents
-    pool:
-      name: $(agent_pool)
-      vmImage: $(image_label)
-    steps:
-      - task: KubectlInstaller@0
-        inputs:
-          kubectlVersion: 'latest'
-      - task: Bash@3
-        inputs:
-          targetType: 'inline'
-          script: |
-            whoami
-            which java
-            echo $PATH
-            echo $(Agent.ToolsDirectory)
-            ls -R $(Agent.ToolsDirectory)
-  - job: explore_self_hosted
-    pool:
-      name: k8s-ci
-    steps:
-      - task: KubectlInstaller@0
-        inputs:
-          kubectlVersion: 'latest'
-      - task: Bash@3
-        inputs:
-          targetType: 'inline'
-          script: |
-            whoami
-            which java
-            echo $PATH
-            echo $(Agent.ToolsDirectory)
-            ls -R $(Agent.ToolsDirectory)
+            echo Carried variable is $(carry_me)
