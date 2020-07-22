@@ -48,6 +48,16 @@ stages:
 - stage: second
   dependsOn: first
   jobs:
+  - job: False
+    condition: ne(stageDependencies.first.set_variables.outputs['send_variable.carry_me'], 'it worked')
+    steps:
+      - script: echo should skip
+
+  - job: True
+    condition: eq(stageDependencies.first.set_variables.outputs['send_variable.carry_me'], 'it worked')
+    steps:
+      - script: echo should run
+
   - job: receive_variable
     variables:
       test_one: $[stageDependencies.first.set_variables.outputs['send_variable.carry_me']]
