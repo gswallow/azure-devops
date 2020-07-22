@@ -46,6 +46,7 @@ stages:
               echo in first stage, hey=$(hey)
 
 - stage: second
+  dependsOn: first
   jobs:
   - job: receive_variable
     variables:
