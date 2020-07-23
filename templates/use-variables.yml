@@ -6,7 +6,7 @@ parameters:
 steps:
   - ${{ each item in parameters.variables }}:
     - task: Bash@3
-      name: use_variable
+      displayName: use ${{ item }} variable
       inputs:
         targetType: 'inline'
         script: |
