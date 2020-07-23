@@ -45,7 +45,7 @@ stages:
     - job: reuse_variable_different_job
       dependsOn: set_variables
       variables:
-        test_one: $[dependencies.set_variables.output['set_variables.second']]
+        test_one: $[dependencies.set_variables.outputs['set_variables.second']]
       pool:
         name: $(agent_pool)
         vmImage: $(image_label)
