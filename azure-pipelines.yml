@@ -3,7 +3,6 @@ variables:
     value: "Azure Pipelines"
   - name: image_label
     value: "ubuntu-latest"
-  - group: terraform
 
 stages:
 - stage: first
@@ -13,53 +12,67 @@ stages:
         name: $(agent_pool)
         vmImage: $(image_label)
       steps:
+        # Set variables whose scopes span tasks (first) and jobs (second)
         - task: Bash@3
+          name: set_variables
           inputs:
             targetType: 'inline'
             script: |
-              echo hey
-        - task: Bash@3
-          inputs:
-            targetType: 'inline'
-            script: |
-              echo "##vso[task.setvariable variable=first]eh?"
-              echo "##vso[task.setvariable variable=second]second"
+              echo "##vso[task.setvariable variable=first]first"
+              echo "##vso[task.setvariable variable=second;isOutput=true]second"
         - template: templates/use-variables.yml
+          name: task_scope 
           parameters:
             variables:
-              - $(first)
-              - ${{ variables.second }}
-              - ${{ format('{0}', variables.first) }}
+              - $(first)                              #pass
+              - ${{ variables.second }}               #fail
+              - ${{ format('{0}', variables.first) }} #fail
+        # SystemsManagerGetParameter is a lightweight task that exports an output variable.
         - task: SystemsManagerGetParameter@1
-          name: "A"
+          name: output_variable
           inputs:
             awsCredentials: 'ci'
             regionName: 'us-east-2'
             readMode: 'single'
             parameterName: 'hey'
+        # Set a variable whose scope spans stages
         - task: Bash@3
           name: send_variable
           inputs:
             targetType: inline
             script: |
-              echo "##vso[task.setvariable variable=carry_me;isOutput=true]$(hey)"
+              echo "##vso[task.setvariable variable=carried;isOutput=true]$(hey)"
               echo "in first stage, hey=$(hey)"
+    - job: reuse_variable_different_job
+      variables:
+        test_one: $[dependencies.set_variables.output['set_variables.second']]
+      pool:
+        name: $(agent_pool)
+        vmImage: $(image_label)
+      steps:
+        - task: Bash@3
+          displayName: reuse_variable_different_job
+          inputs:
+            targetType: inline
+            script: |
+              echo test_one is $(test_one)
 
 - stage: second
-  dependsOn: first
   jobs:
-  - job: receive_variable
+  - job: reuse_variable_different_stage
     variables:
-      test_one: $[stageDependencies.first.set_variables.outputs['send_variable.carry_me']]
-      test_two: $[dependencies.first.set_variables.outputs['send_variable.carry_me']]
-      test_three: $[stageDependencies.first.outputs['set_variables.send_variable.carry_me']]
+      test_one: $[stageDependencies.first.set_variables.outputs['send_variable.carried']]   #pass
+      test_two: $[dependencies.first.set_variables.outputs['send_variable.carried']]        #fail
+      test_three: $[stageDependencies.first.outputs['set_variables.send_variable.carried']] #fail
     pool:
-      name: k8s-ci
+      name: $(agent_pool)
+      vmImage: $(image_label)
     steps:
       - task: Bash@3
+        displayName: Use variable from prior stage
         inputs:
           targetType: inline
           script: |
-            echo test_one is $(test_one) #fail
+            echo test_one is $(test_one)
             echo test_two is $(test_two)
             echo test_three is $(test_three)
