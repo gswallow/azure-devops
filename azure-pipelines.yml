@@ -12,6 +12,11 @@ stages:
         name: $(agent_pool)
         vmImage: $(image_label)
       steps:
+        - task: Bash@3
+          name: build_repository_name
+          inputs:
+            targetType: 'inline'
+            script: echo $(Build.Repository.Name)
         # Set variables whose scopes span tasks (first) and jobs (second)
         - task: Bash@3
           name: set_variables
