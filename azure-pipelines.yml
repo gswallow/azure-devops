@@ -16,7 +16,9 @@ stages:
           name: build_repository_name
           inputs:
             targetType: 'inline'
-            script: echo $(Build.Repository.Name)
+            script: |
+              echo $(Build.Repository.ID)
+              echo $(Build.Repository.Name)
         # Set variables whose scopes span tasks (first) and jobs (second)
         - task: Bash@3
           name: set_variables
