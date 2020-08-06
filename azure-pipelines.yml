@@ -70,7 +70,7 @@ stages:
         - template: templates/use-variables.yml
           parameters:
             variables:
-              - $[variables.test_one]
+              - variables.test_one
 
 - stage: second
   # by default, each stage dependsOn the preceeding stage, otherwise, override:
