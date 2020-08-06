@@ -33,6 +33,10 @@ stages:
               - $(first)                              #pass
               - ${{ variables.second }}               #fail
               - ${{ format('{0}', variables.first) }} #fail
+        - template: templates/use-variables.yml
+          parameters:
+            variables:
+              - $(test)
         # SystemsManagerGetParameter is a lightweight task that exports an output variable.
         - task: SystemsManagerGetParameter@1
           name: output_variable
