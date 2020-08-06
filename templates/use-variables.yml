@@ -11,3 +11,4 @@ steps:
         targetType: 'inline'
         script: |
           echo "${{ item }}"
+          echo "$[variables.${{ item }}]"
