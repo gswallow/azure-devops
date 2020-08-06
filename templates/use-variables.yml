@@ -12,3 +12,4 @@ steps:
         script: |
           echo "${{ item }}"
           echo "$(${{ item }})"
+          echo "${{ variables.${{ item }} }}"
