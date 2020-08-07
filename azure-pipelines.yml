@@ -63,14 +63,17 @@ stages:
             targetType: inline
             script: |
               echo test_one is $(test_one)
+    # Pass a parameter that says which variable to use in a downstream job.
     - job: use_runtime_expression
       variables:
-        test_one: evaluated_with_runtime_expression
+        test_one: value will be exposed
+        test_two: value will also be exposed 
       steps:
-        - template: templates/use-variables.yml
+        - template: templates/use-variables-in-parameter.yml
           parameters:
             variables:
               - test_one
+              - test_two
 
 - stage: second
   # by default, each stage dependsOn the preceeding stage, otherwise, override:

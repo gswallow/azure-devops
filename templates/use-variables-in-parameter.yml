@@ -1,0 +1,15 @@
+parameters:
+  - name: variables
+    type: object
+    default: []
+
+steps:
+  - ${{ each item in parameters.variables }}:
+    - task: Bash@3
+      displayName: use ${{ item }} variable (from parameter)
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Use the value ( $(...) ) a variable whose name is specified
+          # as a parameter ( ${{ parameters.variables }} )
+          echo "$(${{item}})"
