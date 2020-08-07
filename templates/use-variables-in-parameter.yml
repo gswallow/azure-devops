@@ -10,6 +10,6 @@ steps:
       inputs:
         targetType: 'inline'
         script: |
-          # Use the value ( $(...) ) a variable whose name is specified
-          # as a parameter ( ${{ parameters.variables }} )
+          # Use the value ( dollarsign(...) ) a variable whose name is specified
+          # as a parameter ( dollarsign{{ parameters.variables }} )
           echo "$(${{item}})"
