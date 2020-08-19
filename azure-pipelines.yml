@@ -13,7 +13,7 @@ stages:
         vmImage: $(image_label)
       steps:
         - task: Bash@3
-          name: double-quoted flow scalars
+          name: double_quoted_flow_scalars
           inputs:
             targetType: 'inline'
             script: "\
