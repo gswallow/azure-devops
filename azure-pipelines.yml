@@ -17,9 +17,9 @@ stages:
           inputs:
             targetType: 'inline'
             script: "\
-              echo 'sadly,\
-              I cannot get the '\\\"optimal\\\"',\
-              escape sequence for double quotes.\
+              echo sadly ,\
+              I cannot get the '\\\"optimal\\\"' ,\
+              escape sequence for backslash-escaped double quotes.\
               "
 #        - task: Bash@3
 #          name: build_repository_name
