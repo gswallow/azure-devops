@@ -1,0 +1,82 @@
+variables:
+  - name: agent_pool
+    value: "Azure Pipelines"
+  - name: image_label
+    value: "ubuntu-latest"
+
+pool:
+  name: $(agent_pool)
+  vmImage: $(image_label)
+
+stages:
+- stage: first
+  jobs:
+    - job: set_variables
+      steps:
+        # Set variables that may be used in the following step, in the same job 
+        - task: Bash@3
+          name: set_variables
+          inputs:
+            targetType: 'inline'
+            script: |
+              echo "##vso[task.setvariable variable=first]var1_first_job_first_stage"
+              echo "##vso[task.setvariable variable=second;isOutput=true]var2_first_job_first_stage"
+        - template: templates/use-variables.yml
+          parameters:
+            variables:
+              - $(first)                              #pass ("var1_first_job_first_stage")
+              - ${{ variables.second }}               #fail (blank)
+              - ${{ format('{0}', variables.first) }} #fail (blank)
+
+        # Set a variable whose scope spans stages
+        - task: Bash@3
+          name: send_variable
+          inputs:
+            targetType: inline
+            script: |
+              echo "##vso[task.setvariable variable=carried;isOutput=true]variable_carried_from_first_stage"
+
+    # Use a variable within the stage, in a different job
+    - job: reuse_variable_different_job
+      dependsOn: set_variables
+      variables:
+        test_one: $[dependencies.set_variables.outputs['set_variables.second']] # pass ("var2_first_job_first_stage")
+      steps:
+        - task: Bash@3
+          displayName: reuse_variable_different_job
+          inputs:
+            targetType: inline
+            script: |
+              echo test_one is $(test_one)
+
+    # Pass a parameter that says which variable to use in a downstream job.
+    - job: use_runtime_expression
+      variables:
+        test_one: "value will be exposed"
+        test_two: "value will also be exposed"
+      steps:
+        - template: templates/use-variables-in-parameter.yml
+          parameters:
+            variables:
+            - test_one
+            - test_two
+
+# Use the carried variable from the first stage
+- stage: second
+  # by default, each stage dependsOn the preceeding stage, otherwise, override:
+  dependsOn: first
+  jobs:
+  - job: reuse_variable_different_stage
+    variables:
+      test_one: $[stageDependencies.first.set_variables.outputs['send_variable.carried']]   #pass ("variable_carried_from_first_stage")
+      test_two: $[dependencies.first.set_variables.outputs['send_variable.carried']]        #fail (blank)
+      test_three: $[stageDependencies.first.outputs['set_variables.send_variable.carried']] #fail (blank)
+    steps:
+      - task: Bash@3
+        displayName: Use variable from prior stage
+        inputs:
+          targetType: inline
+          script: |
+            echo test_one is $(test_one)
+            echo test_two is $(test_two)
+            echo test_three is $(test_three)

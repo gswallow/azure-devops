@@ -1,82 +1,120 @@
-variables:
-  - name: agent_pool
-    value: "Azure Pipelines"
-  - name: image_label
-    value: "ubuntu-latest"
-
 pool:
-  name: $(agent_pool)
-  vmImage: $(image_label)
+  vmImage: 'ubuntu-latest'
 
 stages:
-- stage: first
+- stage: A
   jobs:
-    - job: set_variables
-      steps:
-        # Set variables that may be used in the following step, in the same job 
-        - task: Bash@3
-          name: set_variables
-          inputs:
-            targetType: 'inline'
-            script: |
-              echo "##vso[task.setvariable variable=first]var1_first_job_first_stage"
-              echo "##vso[task.setvariable variable=second;isOutput=true]var2_first_job_first_stage"
-        - template: templates/use-variables.yml
-          parameters:
-            variables:
-              - $(first)                              #pass ("var1_first_job_first_stage")
-              - ${{ variables.second }}               #fail (blank)
-              - ${{ format('{0}', variables.first) }} #fail (blank)
-
-        # Set a variable whose scope spans stages
-        - task: Bash@3
-          name: send_variable
-          inputs:
-            targetType: inline
-            script: |
-              echo "##vso[task.setvariable variable=carried;isOutput=true]variable_carried_from_first_stage"
-
-    # Use a variable within the stage, in a different job
-    - job: reuse_variable_different_job
-      dependsOn: set_variables
-      variables:
-        test_one: $[dependencies.set_variables.outputs['set_variables.second']] # pass ("var2_first_job_first_stage")
-      steps:
-        - task: Bash@3
-          displayName: reuse_variable_different_job
-          inputs:
-            targetType: inline
-            script: |
-              echo test_one is $(test_one)
-
-    # Pass a parameter that says which variable to use in a downstream job.
-    - job: use_runtime_expression
-      variables:
-        test_one: "value will be exposed"
-        test_two: "value will also be exposed"
-      steps:
-        - template: templates/use-variables-in-parameter.yml
-          parameters:
-            variables:
-            - test_one
-            - test_two
-
-# Use the carried variable from the first stage
-- stage: second
-  # by default, each stage dependsOn the preceeding stage, otherwise, override:
-  dependsOn: first
-  jobs:
-  - job: reuse_variable_different_stage
-    variables:
-      test_one: $[stageDependencies.first.set_variables.outputs['send_variable.carried']]   #pass ("variable_carried_from_first_stage")
-      test_two: $[dependencies.first.set_variables.outputs['send_variable.carried']]        #fail (blank)
-      test_three: $[stageDependencies.first.outputs['set_variables.send_variable.carried']] #fail (blank)
+  - job: A1
     steps:
-      - task: Bash@3
-        displayName: Use variable from prior stage
-        inputs:
-          targetType: inline
-          script: |
-            echo test_one is $(test_one)
-            echo test_two is $(test_two)
-            echo test_three is $(test_three)
+     - script: echo "##vso[task.setvariable variable=valno;isOutput=true]no"
+       name: printvar
+
+
+- stage: depNETrue
+  condition: and(succeeded(), ne(dependencies.A.outputs['A1.printvar.valno'], 'yes'))
+  dependsOn: A
+  jobs:
+  - job: B1
+    steps:
+    - script: echo should run
+
+
+
+- stage: depEQFalse
+  condition: and(succeeded(), eq(dependencies.A.outputs['A1.printvar.valno'], 'yes'))
+  dependsOn: A
+  jobs:
+  - job: B1
+    steps:
+    - script: should skip
+
+
+- stage: depNEFalse
+  condition: and(succeeded(), ne(dependencies.A.outputs['A1.printvar.valno'], 'no'))
+  dependsOn: A
+  jobs:
+  - job: B1
+    steps:
+    - script: echo should skip
+
+
+- stage: depEQTrue
+  condition: and(succeeded(), eq(dependencies.A.outputs['A1.printvar.valno'], 'no'))
+  dependsOn: A
+  jobs:
+  - job: B1
+    steps:
+    - script: echo should run
+
+
+## Below here try to use stage stageDependencies
+
+- stage: stgdepNETrue
+  condition: and(succeeded(), ne(stageDependencies.A.outputs['A1.printvar.valno'], 'yes'))
+  dependsOn: A
+  jobs:
+  - job: B1
+    steps:
+    - script: echo should run
+
+
+- stage: stgdepEQFalse
+  condition: and(succeeded(), eq(stageDependencies.A.outputs['A1.printvar.valno'], 'yes'))
+  dependsOn: A
+  jobs:
+  - job: B1
+    steps:
+    - script: echo should skip
+
+
+- stage: stgdepNEFalse
+  condition: and(succeeded(), ne(stageDependencies.A.outputs['A1.printvar.valno'], 'no'))
+  dependsOn: A
+  jobs:
+  - job: B1
+    steps:
+    - script: echo should skip
+
+
+- stage: stgdepEQTrue
+  condition: and(succeeded(), eq(stageDependencies.A.outputs['A1.printvar.valno'], 'no'))
+  dependsOn: A
+  jobs:
+  - job: B1
+    steps:
+    - script: echo should run
+
+#below here they use the documented syntax from https://docs.microsoft.com/en-us/azure/devops/pipelines/process/expressions?view=azure-devops#dependencies
+#but it does not work at all...it's always skipped
+
+- stage: ShouldRunDependenciesEQDocumentedSyntax
+  condition: and(succeeded(), eq(dependencies.A.A1.outputs['printvar.valno'], 'no'))
+  dependsOn: A
+  jobs:
+  - job: B1
+    steps:
+    - script: echo should run
+
+- stage: ShouldSkipDependenciesEQDocumentedSyntax
+  condition: and(succeeded(), eq(dependencies.A.A1.outputs['printvar.valno'], 'yes'))
+  dependsOn: A
+  jobs:
+  - job: B1
+    steps:
+    - script: echo should skip
+
+- stage: ShouldRunStgdepEQDocumentedSyntax
+  condition: and(succeeded(), eq(stageDependencies.A.A1.outputs['printvar.valno'], 'no'))
+  dependsOn: A
+  jobs:
+  - job: B1
+    steps:
+    - script: echo should run
+
+- stage: ShouldSkipStgdepEQDocumentedSyntax
+  condition: and(succeeded(), eq(stageDependencies.A.A1.outputs['printvar.valno'], 'yes'))
+  dependsOn: A
+  jobs:
+  - job: B1
+    steps:
+    - script: echo should skip
