@@ -1,3 +1,4 @@
+# a comment
 variables:
   - name: agent_pool
     value: "Azure Pipelines"
